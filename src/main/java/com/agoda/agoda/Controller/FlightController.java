@@ -3,6 +3,7 @@ package com.agoda.agoda.Controller;
 
 import com.agoda.agoda.dtos.FlightResponse;
 import com.agoda.agoda.dtos.SearchRequest;
+import com.agoda.agoda.mapper.FlightMapper;
 import com.agoda.agoda.model.Flight;
 import com.agoda.agoda.service.FlightService;
 import jakarta.validation.Valid;
@@ -20,25 +21,22 @@ import java.util.stream.Collectors;
 public class FlightController {
 
     private final FlightService flightService;
+    private final FlightMapper flightMapper;
 
-    public FlightController(FlightService flightService) {
+    public FlightController(FlightService flightService, FlightMapper flightMapper) {
         this.flightService = flightService;
+        this.flightMapper = flightMapper;
     }
 
     @GetMapping
-    public ResponseEntity<?> search(@RequestParam @NotBlank(message = "Origin is required") String origin,
-                                    @RequestParam  @NotBlank(message = "Destination is required")  String destination) {
-        Optional<List<Flight>> result = Optional.ofNullable(flightService.search(origin, destination));
-
-        if (result.isEmpty()) {
-            return ResponseEntity.status(404)
-                    .body("No flights found for " + origin + " → " + destination);
-        }
-        List<FlightResponse> responseList = result.get().stream()
-                .map(this::toFlightResponse)
+    public ResponseEntity<List<FlightResponse>> search(
+            @RequestParam @NotBlank String origin,
+            @RequestParam @NotBlank String destination) {
+        List<Flight> flights = flightService.search(origin, destination);
+        List<FlightResponse> response = flights.stream()
+                .map(flightMapper::toFlightResponse)
                 .collect(Collectors.toList());
-
-        return ResponseEntity.ok(responseList);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/search")
