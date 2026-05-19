@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,10 +57,17 @@ public class FlightService {
                 .cabinClass(FlightCabinClass.ECONOMY)
                 .build());
     }
-    public List<Flight> search(String origin, String destination) {
-        return flights.stream()
-                .filter(f -> f.getOrigin().equalsIgnoreCase(origin)
-                        && f.getDestination().equalsIgnoreCase(destination))
+    public Optional<List<Flight>> search(String origin, String destination) {
+        // Guard against null or blank inputs
+        if (origin == null || origin.isBlank() || destination == null || destination.isBlank()) {
+            return Optional.empty();  // or throw IllegalArgumentException, but we'll handle in controller
+        }
+
+        List<Flight> result = flights.stream()
+                .filter(f -> f.getOrigin().equalsIgnoreCase(origin.trim())
+                        && f.getDestination().equalsIgnoreCase(destination.trim()))
                 .collect(Collectors.toList());
+
+        return result.isEmpty() ? Optional.empty() : Optional.of(result);
     }
 }
